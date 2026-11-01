@@ -1,0 +1,11 @@
+# Secrets: VPN pre-shared keys live in state and in generated configs. Never commit.
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+crash.log
+configs/*
+!configs/.gitkeep
+tfplan
+*.tfplan
+tfplan*

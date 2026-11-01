@@ -1,0 +1,46 @@
+# Runs on every pull request: the "automated peer" before a human reviews.
+# No AWS credentials here on purpose: these checks never touch your account.
+name: terraform-checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: fmt and validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.7
+
+      - name: terraform fmt (style)
+        run: terraform fmt -check -recursive -diff
+
+      - name: terraform init (no state, no AWS)
+        run: terraform init -backend=false -input=false
+
+      - name: terraform validate (syntax and references)
+        run: terraform validate -no-color
+
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Fails the PR if anything that looks like a key, password or token is committed.
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

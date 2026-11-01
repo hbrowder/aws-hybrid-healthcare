@@ -1,0 +1,48 @@
+PROMPTS TO GIVE KIT.  Kit drives: one prompt per job, one report back.
+Start Kit in C:\Users\Asus\aws-hybrid-healthcare:   claude --dangerously-skip-permissions
+Once per laptop (PowerShell, then restart Kit):     setx PANLAB_USER admin
+                                                    setx PANLAB_PASS "<firewall admin password>"
+                                                    setx AWS_PROFILE lab
+
+--- BUILD (AWS already applied) -----------------------------------------------
+Re-read CLAUDE.md. Build Hospital A end to end without asking me anything except what
+"You drive" allows: if configs\hospital-a-fw.set is missing or older than terraform.tfstate,
+regenerate it. Then lab.py hosts and dump, snapshot pre-aws-vpn-<date>, load, read the diff,
+commit if only the expected delete lines were rejected, then run all firewall and AWS checks
+(give IKE and BGP up to 3 minutes). Report: pass/fail per check, and the one thing I must do
+by hand next.
+
+--- REBUILD (new session, AWS torn down) ---------------------------------------
+Re-read CLAUDE.md. Check aws sts get-caller-identity (start aws sso login --profile lab if
+expired; I'll do the browser part). Refresh home_ip in terraform.tfvars, then terraform plan
+-out tfplan and show me only the Plan line (expect 35 to add). After I say "apply": apply tfplan and do BUILD.
+
+--- STATUS ---------------------------------------------------------------------------
+Re-read CLAUDE.md. Run all firewall and AWS checks, read-only. Include the AWS monitoring checks. Report pass/fail per check,
+the watch_* links, and for the first failure, the layer and the fix.
+
+--- TEAR DOWN ---------------------------------------------------------------------
+Show me terraform plan -destroy (Plan line only). After I say "destroy": destroy, and
+confirm nothing tagged Project=aws-hybrid-healthcare is left.
+
+--- REVIEW (a pull request is open) ------------------------------------------------
+Re-read CLAUDE.md "Git and GitHub". Review PR #<n> with gh: read the diff, run terraform fmt -check,
+validate and plan -out tfplan on that branch, and check the GitHub checks are green. Post ONE review
+comment on the PR: Plan line, anything destroyed or replaced and why, cost impact, secrets check,
+and a verdict: "LGTM, ready to merge" or "Changes needed: ...". Don't merge and don't apply.
+
+--- GITHUB SETUP (once) ---------------------------------------------------------------
+Re-read CLAUDE.md "Git and GitHub". Then:
+1. gh auth status (should be hbrowder).
+2. Delete kit-handoff.md and eve-ng\build-sheet.md. Create .github\workflows; move
+   docs\github-setup\terraform-checks.yml into .github\workflows\ and
+   docs\github-setup\pull_request_template.md into .github\; remove docs\github-setup.
+3. git init -b main. Set this repo's email to my private GitHub address:
+   git config user.email (gh api user --jq '"\(.id)+\(.login)@users.noreply.github.com"')
+   Show git config user.name and user.email.
+4. git add . and show git status --short. STOP if it includes terraform.tfvars, any *.tfstate*,
+   tfplan*, .terraform\, configs\ (except .gitkeep), or *.xlsx. Search the staged files for
+   the AWS account ID, the home IP, the personal email and the firewall password: no hits allowed.
+5. If clean: git commit -m "Initial commit: Hospital A hybrid lab (Terraform, monitoring, lab.py)"
+   then gh repo create hbrowder/aws-hybrid-healthcare --public --source . --push
+6. Report the repo URL, the git status check result, and whether terraform-checks ran green on main.

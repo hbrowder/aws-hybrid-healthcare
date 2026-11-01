@@ -1,0 +1,36 @@
+{
+  "_note": "LAB ONLY. lab.py touches only the hosts below, by their management IPs on the 10.99.0.0/24 lab management network. No passwords here: they come from PANLAB_USER / PANLAB_PASS.",
+  "hosts": {
+    "hospital-a-fw": {
+      "mgmt": "10.99.0.11",
+      "role": "Hospital A Palo Alto. Outside ethernet1/1 DHCP on 192.168.1.0/24, inside ethernet1/2 10.0.1.5/24, NAT to 100.64.1.0/24, BGP AS 65010"
+    },
+    "hospital-b-fw": {
+      "mgmt": "FILL-IN",
+      "device_type": "cisco_asa",
+      "firewall": false,
+      "role": "Later: Hospital B Cisco ASAv, mgmt 10.99.0.12, AS 65020, NAT to 100.64.2.0/24. Not a PAN-OS box: excluded from 'all'."
+    },
+    "hospital-c-fw": {
+      "mgmt": "FILL-IN",
+      "device_type": "fortinet",
+      "firewall": false,
+      "role": "Later: Hospital C FortiGate, mgmt 10.99.0.13, static routing, 172.16.0.0/16. Not a PAN-OS box: excluded from 'all'."
+    }
+  },
+  "lab": {
+    "name": "AWS Hybrid Healthcare",
+    "hospital_a_client": "10.0.1.10/24, gateway 10.0.1.5, reached only from the EVE-NG console",
+    "eve_ng_host": "<EVE_NG_IP> on the home LAN (not managed by lab.py)",
+    "mgmt_network": "10.99.0.0/24, gateway 10.99.0.1 on the EVE-NG VM",
+    "home_gateway": "192.168.1.254 (AT&T)"
+  },
+  "aws": {
+    "profile": "lab",
+    "region": "us-east-1",
+    "terraform_dir": "terraform",
+    "vendor_vpc": "10.100.0.0/16",
+    "vendor_app": "10.100.11.10",
+    "transit_gateway_asn": 64512
+  }
+}
