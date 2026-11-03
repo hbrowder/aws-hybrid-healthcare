@@ -14,9 +14,10 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project = "aws-hybrid-healthcare"
-      Company = "Downrange Cloud"
-      Owner   = "harold"
+      Project     = "aws-hybrid-healthcare"
+      Company     = "Downrange Cloud"
+      Owner       = "harold"
+      Environment = "lab"
     }
   }
 }
