@@ -94,8 +94,9 @@ one at a time. He snapshots, loads the config, shows you the diff, and commits o
 | 8 | Linux client | `ping -c 3 10.100.11.10` | Replies |
 | 9 | Linux client | `curl http://10.100.11.10:8080` | **sees you as 100.64.1.10** |
 | 10 | Palo Alto | Disable aws-t1 (`set network ike gateway aws-t1 disabled yes`, commit), rerun 9, re-enable | Still works on tunnel 2 |
-| 11 | Linux client | `curl http://<ha_app_url>:8080` six times (from `terraform output ha_app_url`) | **sees you as 100.64.1.x**, answers alternate between two instances in two AZs |
-| 12 | AWS console + client | Terminate one `downrange-cloud-app-ha` instance (EC2 console), keep curling | Every curl still answers from the other AZ; Auto Scaling launches a replacement in a few minutes; UnHealthy alarm email, then OK |
+| 11 | Linux client | `curl <ha_app_url>` six times (the URL from `terraform output ha_app_url`) | **sees you as 100.64.1.x**, answers alternate between two instances in two AZs |
+| 12 | AWS console + client | Terminate one `downrange-cloud-app-ha` instance (EC2 console), keep curling | After a few seconds (one or two curls may fail meanwhile) every curl answers from the other AZ; Auto Scaling launches a replacement in a few minutes. A terminated target isn't counted as unhealthy, so expect no alarm email here |
+| 12b | Instance Connect + client | On one `downrange-cloud-app-ha` instance, `sudo systemctl stop whoami-ha`, keep curling | Curls answer from the other AZ; `downrange-cloud-app-ha-unhealthy` alarm email within a couple of minutes; Auto Scaling replaces the instance (ELB health check), then OK email |
 
 Checks 1–5 run through Kit (`python lab.py show hospital-a-fw "<command>"`). Checks 8–9 run on the Linux client's EVE-NG console.
 

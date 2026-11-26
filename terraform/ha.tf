@@ -56,13 +56,9 @@ resource "aws_security_group" "app_ha" {
     security_groups = [aws_security_group.eice.id]
   }
 
-  egress {
-    description = "Replies"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # No egress rules on purpose. Security groups are stateful, so replies to the ALB and to
+  # Instance Connect go out anyway; IMDS and the VPC DNS resolver aren't filtered by
+  # security groups; and the VPC has no internet path.
 }
 
 # ---- Load balancer ----------------------------------------------------------------
@@ -113,6 +109,15 @@ resource "aws_launch_template" "app" {
 
   metadata_options {
     http_tokens = "required" # IMDSv2 only
+  }
+
+  # Provider default_tags don't reach the volumes and ENIs of launched instances either.
+  dynamic "tag_specifications" {
+    for_each = ["volume", "network-interface"]
+    content {
+      resource_type = tag_specifications.value
+      tags          = merge(local.common_tags, { Name = "downrange-cloud-app-ha" })
+    }
   }
 
   user_data = base64encode(<<-EOF
@@ -205,6 +210,6 @@ resource "aws_cloudwatch_metric_alarm" "app_unhealthy" {
 }
 
 output "ha_app_url" {
-  description = "Check 11 from a hospital client: repeat it and watch the instance and AZ change."
-  value       = "curl http://${aws_lb.app.dns_name}:8080   (expect: sees you as 100.64.1.x, alternating AZs)"
+  description = "Check 11: on a hospital client, curl this URL several times (expect: sees you as 100.64.1.x, alternating AZs)."
+  value       = "http://${aws_lb.app.dns_name}:8080"
 }

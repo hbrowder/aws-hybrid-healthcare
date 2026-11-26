@@ -154,18 +154,19 @@ Expected: both tunnels UP with 1 accepted route each; rt-downrange-cloud shows 1
 AWS monitoring checks (read-only, from terraform/; monitoring.tf builds these):
 ```
 aws cloudwatch describe-alarms --alarm-name-prefix hospital-a- --query "MetricAlarms[].{Alarm:AlarmName,State:StateValue}" --output table
+aws cloudwatch describe-alarms --alarm-name-prefix downrange-cloud-app-ha- --query "MetricAlarms[].{Alarm:AlarmName,State:StateValue}" --output table
 aws logs filter-log-events --log-group-name /downrange-cloud/vpc-flow --filter-pattern "100.64.1" --max-items 5 --query "events[].message"
 aws logs filter-log-events --log-group-name /downrange-cloud/vpn-hospital-a --max-items 5 --query "events[].message"
 aws networkmanager get-transit-gateway-registrations --region us-west-2 --global-network-id <from terraform state show> --query "TransitGatewayRegistrations[].State.Code"
 aws sns list-subscriptions-by-topic --topic-arn <topic arn> --query "Subscriptions[].SubscriptionArn"
 ```
-Expected: both alarms OK once the tunnels are up; flow-log lines for 100.64.1.x to 10.100.11.10 after a client
+Expected: both hospital-a- alarms OK once the tunnels are up; downrange-cloud-app-ha-unhealthy OK once both HA targets are healthy; flow-log lines for 100.64.1.x to 10.100.11.10 after a client
 test; IKE lines in the VPN log; registration AVAILABLE; subscription not "PendingConfirmation" (if it is, Harold
 must click the email link). In your report, give Harold the `watch_*` outputs so he can open each view.
 
 The client tests (`ping 10.100.11.10`, `curl http://10.100.11.10:8080` showing
 **sees you as 100.64.1.10**, and checks 11-12 against `terraform output ha_app_url`) run on the
-clients' EVE-NG consoles. Harold runs those, and does the check 12 instance termination in the console.
+clients' EVE-NG consoles. Harold runs those, and does the check 12 instance termination and the check 12b service stop.
 AWS read-only check for the HA tier: `aws elbv2 describe-target-health --target-group-arn <tg arn>`
 (both targets `healthy`).
 
