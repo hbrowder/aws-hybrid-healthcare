@@ -189,11 +189,7 @@ provider "aws" {
   region = "us-west-2"
 
   default_tags {
-    tags = {
-      Project = "aws-hybrid-healthcare"
-      Company = "Downrange Cloud"
-      Owner   = "harold"
-    }
+    tags = local.common_tags
   }
 }
 
