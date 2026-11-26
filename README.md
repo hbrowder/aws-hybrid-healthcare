@@ -9,7 +9,7 @@ downrange-cloud-tgw → downrange-cloud-app, which reports that it sees the clie
 
 | Folder / file | What it is |
 |---|---|
-| terraform/ | The whole AWS side (35 resources, including the monitoring in monitoring.tf) **and** the complete Palo Alto config, generated with your live tunnel IPs and keys |
+| terraform/ | The whole AWS side (43 resources, including the monitoring in monitoring.tf and the HA app tier in ha.tf) **and** the complete Palo Alto config, generated with your live tunnel IPs and keys |
 | configs/ | Where the generated firewall config lands (git-ignored: it holds the VPN keys) |
 | docs/eve-ng-build-sheet.md | Nodes, links, console bootstrap, Linux client config |
 | eve-ng/mgmt-network.sh | One-time setup of the 10.99.0.0/24 management network on the EVE-NG VM |
@@ -51,7 +51,7 @@ aws sts get-caller-identity
 Copy-Item terraform.tfvars.example terraform.tfvars    # then set home_ip
 terraform init
 terraform validate
-terraform plan        # expect 35 to add, 0 to change, 0 to destroy
+terraform plan        # expect 43 to add, 0 to change, 0 to destroy
 terraform apply
 ```
 
@@ -94,6 +94,9 @@ one at a time. He snapshots, loads the config, shows you the diff, and commits o
 | 8 | Linux client | `ping -c 3 10.100.11.10` | Replies |
 | 9 | Linux client | `curl http://10.100.11.10:8080` | **sees you as 100.64.1.10** |
 | 10 | Palo Alto | Disable aws-t1 (`set network ike gateway aws-t1 disabled yes`, commit), rerun 9, re-enable | Still works on tunnel 2 |
+| 11 | Linux client | `curl <ha_app_url>` six times (the URL from `terraform output ha_app_url`) | **sees you as 100.64.1.x**, answers alternate between two instances in two AZs |
+| 12 | AWS console + client | Terminate one `downrange-cloud-app-ha` instance (EC2 console), keep curling | After a few seconds (one or two curls may fail meanwhile) every curl answers from the other AZ; Auto Scaling launches a replacement in a few minutes. A terminated target isn't counted as unhealthy, so expect no alarm email here |
+| 12b | Instance Connect + client | On one `downrange-cloud-app-ha` instance, `sudo systemctl stop whoami-ha`, keep curling | Curls answer from the other AZ; `downrange-cloud-app-ha-unhealthy` alarm email within a couple of minutes; Auto Scaling replaces the instance (ELB health check), then OK email |
 
 Checks 1–5 run through Kit (`python lab.py show hospital-a-fw "<command>"`). Checks 8–9 run on the Linux client's EVE-NG console.
 
@@ -132,8 +135,8 @@ Shut down the EVE-NG nodes or leave them. Next session, `terraform apply` create
 new tunnel IPs and keys, so regenerate `configs/hospital-a-fw.set` and have Kit load, diff
 and commit it again. On a re-load, the `delete` lines at the top fail harmlessly because the objects are in use.
 
-**Cost while up:** about $0.20 an hour (VPN connection, two Transit Gateway
-attachments, t3.micro). Destroy at the end of every session.
+**Cost while up:** about $0.30 an hour (VPN connection, two Transit Gateway
+attachments, an internal ALB and three t3.micro). Destroy at the end of every session.
 
 ## Not tested from here
 
