@@ -9,14 +9,19 @@ terraform {
   }
 }
 
+locals {
+  common_tags = {
+    Project     = "aws-hybrid-healthcare"
+    Company     = "Downrange Cloud"
+    Owner       = "harold"
+    Environment = "lab"
+  }
+}
+
 provider "aws" {
   region = var.region
 
   default_tags {
-    tags = {
-      Project = "aws-hybrid-healthcare"
-      Company = "Downrange Cloud"
-      Owner   = "harold"
-    }
+    tags = local.common_tags
   }
 }
