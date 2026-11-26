@@ -15,7 +15,7 @@ by hand next.
 --- REBUILD (new session, AWS torn down) ---------------------------------------
 Re-read CLAUDE.md. Check aws sts get-caller-identity (start aws sso login --profile lab if
 expired; I'll do the browser part). Refresh home_ip in terraform.tfvars, then terraform plan
--out tfplan and show me only the Plan line (expect 35 to add). After I say "apply": apply tfplan and do BUILD.
+-out tfplan and show me only the Plan line (expect 43 to add). After I say "apply": apply tfplan and do BUILD.
 
 --- STATUS ---------------------------------------------------------------------------
 Re-read CLAUDE.md. Run all firewall and AWS checks, read-only. Include the AWS monitoring checks. Report pass/fail per check,
